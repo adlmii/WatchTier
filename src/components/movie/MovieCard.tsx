@@ -23,15 +23,16 @@ export default function MovieCard({ movie }: { movie: Movie }) {
       <Link to={`/movie/${movie.id}`} className="block w-full h-full">
         <img 
           src={movie.poster_path} 
-          alt={movie.title} 
+          alt={movie.title}
+          // OPTIMASI GAMBAR DISINI
+          loading="lazy" 
+          decoding="async" 
+          // ----------------------
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          loading="lazy"
         />
         
-        {/* Gradient Overlay Premium */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
         
-        {/* Judul */}
         <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
           <h3 className="text-sm font-bold text-white truncate leading-tight drop-shadow-md">
             {movie.title}
@@ -42,7 +43,6 @@ export default function MovieCard({ movie }: { movie: Movie }) {
         </div>
       </Link>
 
-      {/* Tombol Quick Add */}
       <button
         onClick={handleAdd}
         disabled={isAdded}

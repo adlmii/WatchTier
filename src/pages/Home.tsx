@@ -1,31 +1,58 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutGrid, Flame, Search, Compass, PlayCircle } from 'lucide-react';
+import { LayoutGrid, Flame, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import SearchBar from '../components/search/SearchBar';
 import MovieCard from '../components/movie/MovieCard';
+import SkeletonCard from '../components/ui/SkeletonCard';
 import { useTierStore } from '../store/useTierStore';
 
-// Daftar Genre
 const GENRES = [
   { id: null, name: 'Trending' },
   { id: 28, name: 'Action' },
   { id: 35, name: 'Comedy' },
   { id: 27, name: 'Horror' },
-  { id: 16, name: 'Anime' }, // Ubah Animation jadi Anime biar pendek
+  { id: 16, name: 'Anime' },
   { id: 878, name: 'Sci-Fi' },
   { id: 18, name: 'Drama' },
   { id: 53, name: 'Thriller' },
 ];
 
 export default function Home() {
-  const { searchResults, trendingMovies, fetchTrending, fetchMoviesByGenre, activeGenre, isLoading } = useTierStore();
+  const { 
+    searchResults, 
+    trendingMovies, 
+    fetchTrending, 
+    fetchMoviesByGenre, 
+    activeGenre, 
+    isLoading,
+    currentPage 
+  } = useTierStore();
 
   useEffect(() => {
-    if (trendingMovies.length === 0) fetchTrending();
+    document.title = "WatchTier - Discover & Rank Movies";
+  }, []);
+
+  useEffect(() => {
+    if (trendingMovies.length === 0) fetchTrending(1);
   }, []);
 
   const handleGenreClick = (genreId: number | null) => {
-    genreId === null ? fetchTrending() : fetchMoviesByGenre(genreId);
+    if (genreId === null) {
+      fetchTrending(1);
+    } else {
+      fetchMoviesByGenre(genreId, 1);
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1) return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    if (activeGenre === null) {
+      fetchTrending(newPage);
+    } else {
+      fetchMoviesByGenre(activeGenre, newPage);
+    }
   };
 
   const isSearching = searchResults.length > 0;
@@ -54,13 +81,14 @@ export default function Home() {
             <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
               <LayoutGrid className="text-white w-5 h-5" />
             </div>
+            {/* --- GANTI TEKS LOGO --- */}
             <span className="text-2xl font-bold tracking-tight">
-              Movie<span className="text-primary">Pool</span>
+              Watch<span className="text-primary">Tier</span>
             </span>
           </div>
           
           <Link to="/tier-list" className="btn-secondary rounded-full px-6 backdrop-blur-md">
-            <span>My Rank List</span>
+            <span>My Tier List</span>
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse ml-1" />
           </Link>
         </header>
@@ -74,7 +102,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-lg text-slate-400 max-w-xl mx-auto">
-            Build your ultimate movie collection and rank them in your personal tier list.
+            Build your ultimate movie collection and rank them in your personal tier list on <b>WatchTier</b>.
           </p>
           <div className="pt-6">
             <SearchBar />
@@ -110,26 +138,49 @@ export default function Home() {
               {isSearching ? <Search className="w-5 h-5" /> : <Flame className="w-5 h-5" />}
             </div>
             <h2 className="text-2xl font-bold text-white">{getSectionTitle()}</h2>
-            {isLoading && <Loader2 className="w-5 h-5 animate-spin text-slate-500 ml-auto" />}
           </div>
 
-          {displayMovies.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 animate-fade-in-up">
-              {displayMovies.map((movie) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 animate-fade-in-up">
+            {isLoading ? (
+              Array.from({ length: 10 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))
+            ) : displayMovies.length > 0 ? (
+              displayMovies.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} />
-              ))}
-            </div>
-          ) : (
-            <div className="py-32 text-center opacity-50">
-               <p className="text-xl font-medium">No movies found</p>
+              ))
+            ) : (
+              <div className="col-span-full py-20 text-center opacity-50">
+                 <p className="text-xl font-medium">No movies found</p>
+              </div>
+            )}
+          </div>
+
+          {/* PAGINATION */}
+          {!isSearching && displayMovies.length > 0 && !isLoading && (
+            <div className="flex justify-center items-center gap-4 pt-12 animate-fade-in-up">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="btn-secondary rounded-full w-12 h-12 flex items-center justify-center disabled:opacity-30"
+              >
+                <ChevronLeft size={20} />
+              </button>
+
+              <div className="px-6 py-3 rounded-full bg-surface border border-white/5 font-bold text-primary shadow-lg">
+                Page {currentPage}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                className="btn-secondary rounded-full w-12 h-12 flex items-center justify-center disabled:opacity-30"
+              >
+                <ChevronRight size={20} />
+              </button>
             </div>
           )}
         </div>
       </div>
     </div>
   );
-}
-
-function Loader2({ className }: { className?: string }) {
-  return <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
 }

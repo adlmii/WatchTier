@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
   rectIntersection,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -32,8 +33,13 @@ export default function TierBoard() {
   const { takeScreenshot, isDownloading } = useScreenshot();
   const [activeMovie, setActiveMovie] = useState<Movie | null>(null);
 
+  useEffect(() => {
+    document.title = "WatchTier - My Ranking Board";
+  }, []);
+
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -174,10 +180,10 @@ export default function TierBoard() {
                 <TierRow key={tier.id} tier={tier} />
                 ))}
                 
-                {/* Watermark Minimalis */}
+                {/* Watermark Minimalis (UPDATED) */}
                 <div className="flex items-center justify-center gap-3 mt-8 opacity-20">
                 <div className="h-px w-16 bg-white" />
-                <span className="text-[10px] font-bold tracking-[0.4em] uppercase text-white">RankMyMovie</span>
+                <span className="text-[10px] font-bold tracking-[0.4em] uppercase text-white">WatchTier</span>
                 <div className="h-px w-16 bg-white" />
                 </div>
             </div>

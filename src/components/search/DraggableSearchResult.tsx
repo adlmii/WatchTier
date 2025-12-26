@@ -21,7 +21,6 @@ export default function DraggableSearchResult({ movie, onRemove }: Props) {
         {...listeners}
         {...attributes}
         layoutId={`pool-${movie.id}`}
-        
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         whileHover={{ scale: 1.05 }}
@@ -37,10 +36,13 @@ export default function DraggableSearchResult({ movie, onRemove }: Props) {
           src={`${movie.poster_path}?v=1`}
           alt={movie.title}
           crossOrigin="anonymous"
+          // OPTIMASI GAMBAR DISINI
+          loading="lazy"
+          decoding="async"
+          // ----------------------
           className="w-full h-full object-cover pointer-events-none"
         />
         
-        {/* Overlay Judul Mini */}
         <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/90 to-transparent p-2 pt-6">
           <p className="text-[10px] text-center text-slate-200 font-medium truncate">
             {movie.title}
@@ -48,7 +50,6 @@ export default function DraggableSearchResult({ movie, onRemove }: Props) {
         </div>
       </motion.div>
 
-      {/* Tombol Hapus */}
       {onRemove && (
         <button
           onClick={(e) => {

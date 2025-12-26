@@ -10,12 +10,14 @@ interface TierState {
   trendingMovies: Movie[];
   activeGenre: number | null;
   isLoading: boolean;
+  currentPage: number;
 
   // Actions
   searchMovies: (query: string) => Promise<void>;
-  fetchTrending: () => Promise<void>;
-  fetchMoviesByGenre: (genreId: number) => Promise<void>;
+  fetchTrending: (page?: number) => Promise<void>;
+  fetchMoviesByGenre: (genreId: number, page?: number) => Promise<void>;
   setSearchResults: (movies: Movie[]) => void;
+  setPage: (page: number) => void; // Action ganti halaman
   
   addToPool: (movie: Movie) => void;
   removeFromPool: (movieId: number) => void;
@@ -24,7 +26,6 @@ interface TierState {
   updateTierMovies: (tierId: TierLabel, newMovies: Movie[]) => void;
   removeMovieFromTier: (movieId: number, tierId: TierLabel) => void;
   
-  // Action Khusus
   unrankMovie: (movie: Movie, tierId: TierLabel) => void;
   resetTierList: () => void;
   resetAll: () => void;
@@ -47,13 +48,17 @@ export const useTierStore = create<TierState>()(
       trendingMovies: [],
       activeGenre: null,
       isLoading: false,
+      currentPage: 1,
 
       setSearchResults: (movies) => set({ searchResults: movies }),
+      setPage: (page) => set({ currentPage: page }),
 
-      fetchTrending: async () => {
-        set({ isLoading: true, activeGenre: null });
+      fetchTrending: async (page = 1) => {
+        set({ isLoading: true, activeGenre: null, currentPage: page });
         try {
-          const response = await tmdb.get('/trending/movie/week');
+          const response = await tmdb.get('/trending/movie/week', {
+            params: { page }
+          });
           const movies = response.data.results
             .filter((item: any) => item.poster_path)
             .map((item: any) => ({
@@ -69,15 +74,15 @@ export const useTierStore = create<TierState>()(
         }
       },
 
-      fetchMoviesByGenre: async (genreId) => {
-        set({ isLoading: true, activeGenre: genreId });
+      fetchMoviesByGenre: async (genreId, page = 1) => {
+        set({ isLoading: true, activeGenre: genreId, currentPage: page });
         try {
           const response = await tmdb.get('/discover/movie', {
             params: {
               with_genres: genreId,
               sort_by: 'popularity.desc',
               include_adult: false,
-              page: 1
+              page: page
             }
           });
           
@@ -157,7 +162,6 @@ export const useTierStore = create<TierState>()(
           ),
         })),
       
-      // Action: Pindah dari Tier ke Pool (Safety Check Bypass)
       unrankMovie: (movie, tierId) => set((state) => {
         const newTiers = state.tiers.map((tier) => 
           tier.id === tierId 
@@ -172,23 +176,16 @@ export const useTierStore = create<TierState>()(
         return { tiers: newTiers, moviesPool: newPool };
       }),
 
-      // Action: Reset Ranking (Tier -> Pool)
       resetTierList: () => set((state) => {
         const allRankedMovies = state.tiers.flatMap(t => t.movies);
         const newPool = [...state.moviesPool];
-        
         allRankedMovies.forEach(movie => {
-          if (!newPool.find(m => m.id === movie.id)) {
-            newPool.push(movie);
-          }
+          if (!newPool.find(m => m.id === movie.id)) newPool.push(movie);
         });
-
         const newTiers = state.tiers.map(t => ({ ...t, movies: [] }));
-
         return { tiers: newTiers, moviesPool: newPool };
       }),
 
-      // Action: Hapus Semuanya
       resetAll: () => set({ tiers: initialTiers, moviesPool: [], searchResults: [] }),
     }),
     {
