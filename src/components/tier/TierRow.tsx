@@ -1,8 +1,9 @@
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
-import type { Tier } from '../../types';
+import type { Tier, Movie } from '../../types';
 import DraggableMovie from './DraggableMovie';
 import { cn } from '../../lib/utils';
+import { useTierStore } from '../../store/useTierStore';
 
 interface TierRowProps {
   tier: Tier;
@@ -13,19 +14,21 @@ export default function TierRow({ tier }: TierRowProps) {
     id: tier.id,
   });
 
+  const unrankMovie = useTierStore((state) => state.unrankMovie);
+
+  const handleUnrank = (movie: Movie) => {
+    unrankMovie(movie, tier.id);
+  };
+
   return (
-    // Container Utama dengan efek Glass
     <div className="flex w-full mb-4 rounded-xl overflow-hidden glass-panel group transition-all duration-300 hover:border-white/10">
       
-      {/* BAGIAN LABEL (S, A, B...) */}
+      {/* LABEL TIER */}
       <div
         className="w-24 md:w-32 flex-shrink-0 flex items-center justify-center relative overflow-hidden"
-        style={{ backgroundColor: `${tier.color}15` }} // Transparan 15%
+        style={{ backgroundColor: `${tier.color}15` }}
       >
-        {/* Garis Warna Solid di Kiri */}
         <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: tier.color }} />
-        
-        {/* Teks Label */}
         <span 
           className="text-4xl md:text-5xl font-black tracking-tighter drop-shadow-lg"
           style={{ color: tier.color }}
@@ -34,12 +37,11 @@ export default function TierRow({ tier }: TierRowProps) {
         </span>
       </div>
 
-      {/* AREA DROP ZONE */}
+      {/* DROP ZONE */}
       <div
         ref={setNodeRef}
         className={cn(
           "flex-1 flex flex-wrap gap-3 p-4 min-h-[140px] transition-colors duration-300",
-          // Efek saat ada item yang di-drag di atasnya (Highlight)
           isOver ? "bg-white/5 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]" : "bg-transparent"
         )}
       >
@@ -49,12 +51,14 @@ export default function TierRow({ tier }: TierRowProps) {
         >
           {tier.movies.map((movie) => (
             <div key={movie.id} className="w-24 md:w-28">
-              <DraggableMovie movie={movie} />
+              <DraggableMovie 
+                movie={movie} 
+                onRemove={() => handleUnrank(movie)}
+              />
             </div>
           ))}
         </SortableContext>
         
-        {/* Placeholder Elegan */}
         {tier.movies.length === 0 && !isOver && (
           <div className="w-full h-full flex flex-col items-center justify-center opacity-20 pointer-events-none gap-2">
             <div className="w-12 h-12 rounded-full border-2 border-dashed border-slate-400" />
