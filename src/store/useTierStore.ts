@@ -17,7 +17,7 @@ interface TierState {
   fetchTrending: (page?: number) => Promise<void>;
   fetchMoviesByGenre: (genreId: number, page?: number) => Promise<void>;
   setSearchResults: (movies: Movie[]) => void;
-  setPage: (page: number) => void; // Action ganti halaman
+  setPage: (page: number) => void;
   
   addToPool: (movie: Movie) => void;
   removeFromPool: (movieId: number) => void;
@@ -41,7 +41,7 @@ const initialTiers: Tier[] = [
 
 export const useTierStore = create<TierState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       tiers: initialTiers,
       moviesPool: [],
       searchResults: [],
